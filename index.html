@@ -31,6 +31,22 @@
       cursor: pointer; display: flex; align-items: center; gap: 5px; transition: background 0.15s;
     }
     .refresh-btn:hover { background: var(--bg3); }
+
+    /* 漲跌排行 */
+    .ranking-area {
+      background: var(--bg2); border-radius: var(--radius-lg);
+      padding: 14px 16px; margin-bottom: 1.25rem;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    }
+    .ranking-col h3 { font-size: 12px; font-weight: 500; color: var(--text3); margin-bottom: 10px; letter-spacing: 0.05em; }
+    .ranking-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 5px 0; border-bottom: 0.5px solid var(--border); font-size: 13px;
+    }
+    .ranking-item:last-child { border-bottom: none; }
+    .ranking-name { color: var(--text2); }
+    .ranking-pct { font-weight: 500; }
+
     .section-label {
       font-size: 11px; font-weight: 500; color: var(--text3);
       letter-spacing: 0.08em; text-transform: uppercase;
@@ -40,10 +56,7 @@
       font-size: 12px; color: var(--text3); margin-bottom: 10px;
       display: flex; align-items: center; gap: 6px;
     }
-    .compare-hint span {
-      background: var(--bg3); border-radius: 4px;
-      padding: 2px 8px; font-size: 11px; color: var(--text2);
-    }
+    .compare-hint span { background: var(--bg3); border-radius: 4px; padding: 2px 8px; font-size: 11px; color: var(--text2); }
     .cards {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       gap: 10px; margin-bottom: 4px;
@@ -51,8 +64,7 @@
     .card {
       background: var(--bg2); border-radius: var(--radius-lg);
       padding: 12px 14px; cursor: pointer;
-      border: 0.5px solid transparent; transition: border-color 0.15s;
-      position: relative;
+      border: 0.5px solid transparent; transition: border-color 0.15s; position: relative;
     }
     .card:hover { border-color: var(--border2); }
     .card.selected { border-color: #378add; }
@@ -61,8 +73,7 @@
       position: absolute; top: 8px; right: 8px;
       width: 16px; height: 16px; border-radius: 50%;
       border: 1.5px solid var(--border2); background: transparent;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 9px; transition: all 0.15s;
+      display: flex; align-items: center; justify-content: center; font-size: 9px;
     }
     .card.comparing .card-check { background: var(--compare-color, #888); border-color: var(--compare-color, #888); color: #fff; }
     .card-symbol { font-size: 11px; color: var(--text3); margin-bottom: 2px; }
@@ -71,6 +82,8 @@
     .card-change { font-size: 12px; }
     .card-skeleton { opacity: 0.3; }
     .up { color: var(--up); } .down { color: var(--down); } .flat { color: var(--text2); }
+
+    /* Chart */
     .chart-area { background: var(--bg2); border-radius: var(--radius-lg); padding: 16px 18px; margin-top: 1.25rem; }
     .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
     .chart-title { font-size: 14px; font-weight: 500; }
@@ -94,9 +107,25 @@
     .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .chart-wrap { position: relative; width: 100%; height: 280px; }
     .chart-note { font-size: 11px; color: var(--text3); text-align: right; margin-top: 8px; }
+
+    /* 新聞 */
+    .news-area { background: var(--bg2); border-radius: var(--radius-lg); padding: 16px 18px; margin-top: 1.25rem; }
+    .news-header { font-size: 14px; font-weight: 500; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+    .news-list { display: flex; flex-direction: column; gap: 10px; }
+    .news-item {
+      padding: 10px 12px; background: var(--bg3); border-radius: var(--radius-md);
+      cursor: pointer; transition: background 0.15s; text-decoration: none;
+      display: block;
+    }
+    .news-item:hover { background: #2a2a28; }
+    .news-title { font-size: 13px; color: var(--text); margin-bottom: 4px; line-height: 1.4; }
+    .news-meta { font-size: 11px; color: var(--text3); }
+    .news-loading { font-size: 13px; color: var(--text3); text-align: center; padding: 1.5rem; }
+
     @media (max-width: 480px) {
       .cards { grid-template-columns: repeat(2, 1fr); }
       .card-price { font-size: 16px; }
+      .ranking-area { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -110,6 +139,18 @@
       <button class="refresh-btn" onclick="doRefresh()">
         <i class="ti ti-refresh" aria-hidden="true"></i> 更新
       </button>
+    </div>
+  </div>
+
+  <!-- 漲跌排行 -->
+  <div class="ranking-area">
+    <div class="ranking-col">
+      <h3>🔴 今日漲幅前三</h3>
+      <div id="rank-up"><div class="news-loading">載入中...</div></div>
+    </div>
+    <div class="ranking-col">
+      <h3>🟢 今日跌幅前三</h3>
+      <div id="rank-down"><div class="news-loading">載入中...</div></div>
     </div>
   </div>
 
@@ -153,6 +194,15 @@
       <canvas id="lineChart" role="img" aria-label="歷史走勢折線圖"></canvas>
     </div>
     <p class="chart-note">資料來源：Yahoo Finance｜延遲約 15 分鐘</p>
+  </div>
+
+  <!-- 個股新聞 -->
+  <div class="news-area">
+    <div class="news-header">
+      <i class="ti ti-news" style="font-size:15px;color:var(--text2)"></i>
+      <span id="newsTitle">相關新聞</span>
+    </div>
+    <div class="news-list" id="newsList"><div class="news-loading">點擊股票卡片查看相關新聞</div></div>
   </div>
 
 </div>
@@ -207,11 +257,34 @@ function cc(v){ return v>0?'up':v<0?'down':'flat'; }
 function ar(v){ return v>0?'▲':v<0?'▼':'—'; }
 function fmt(n,d=2){ return n!=null?n.toFixed(d):'—'; }
 
+/* ── 漲跌排行 ── */
+function renderRanking() {
+  const all = allStocks
+    .filter(s => priceData[s.symbol])
+    .map(s => ({ name: s.name, pct: priceData[s.symbol].pct }))
+    .sort((a,b) => b.pct - a.pct);
+
+  const top3 = all.slice(0, 3);
+  const bot3 = all.slice(-3).reverse();
+
+  document.getElementById('rank-up').innerHTML = top3.map(s => `
+    <div class="ranking-item">
+      <span class="ranking-name">${s.name}</span>
+      <span class="ranking-pct up">▲ ${s.pct.toFixed(2)}%</span>
+    </div>`).join('') || '<div class="news-loading">載入中...</div>';
+
+  document.getElementById('rank-down').innerHTML = bot3.map(s => `
+    <div class="ranking-item">
+      <span class="ranking-name">${s.name}</span>
+      <span class="ranking-pct down">▼ ${Math.abs(s.pct).toFixed(2)}%</span>
+    </div>`).join('') || '<div class="news-loading">載入中...</div>';
+}
+
+/* ── cards ── */
 function renderGroup(key) {
   const el = document.getElementById(`cards-${key}`);
   if (!el) return;
-  const stocks = stockGroups[key];
-  el.innerHTML = stocks.map(s => {
+  el.innerHTML = stockGroups[key].map(s => {
     const idx = allStocks.findIndex(a=>a.symbol===s.symbol);
     const d = priceData[s.symbol];
     const price = d?fmt(d.price):'—';
@@ -225,8 +298,7 @@ function renderGroup(key) {
     return `
       <div class="card ${isSel?'selected':''} ${isCmp?'comparing':''}"
            style="${isCmp?`--compare-color:${color}`:''}"
-           onclick="cardClick(${idx})"
-           ondblclick="cardDblClick(${idx})"
+           onclick="cardClick(${idx})" ondblclick="cardDblClick(${idx})"
            role="button" tabindex="0">
         <div class="card-check">${isCmp?'✓':''}</div>
         <div class="card-symbol">${s.short}</div>
@@ -243,14 +315,48 @@ function renderCards() {
   if (compareMode && compareSet.length > 0) {
     cnt.style.display='inline';
     cnt.textContent = `已選 ${compareSet.length}/5`;
-  } else {
-    cnt.style.display='none';
+  } else { cnt.style.display='none'; }
+}
+
+/* ── 個股新聞 ── */
+async function fetchNews(symbol, name) {
+  document.getElementById('newsTitle').textContent = `${name} 相關新聞`;
+  document.getElementById('newsList').innerHTML = '<div class="news-loading">載入新聞中...</div>';
+  try {
+    const ticker = symbol.replace('.TW','').replace('.KS','');
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
+    const newsUrl = `https://query2.finance.yahoo.com/v1/finance/search?q=${ticker}&lang=zh-TW&region=TW&quotesCount=0&newsCount=5`;
+    const r = await fetch(PROXY + newsUrl.replace('https://query2.finance.yahoo.com/','').replace('https://query1.finance.yahoo.com/',''));
+    const j = await r.json();
+    const news = j.news ?? [];
+    if (!news.length) {
+      document.getElementById('newsList').innerHTML = '<div class="news-loading">目前無相關新聞</div>';
+      return;
+    }
+    document.getElementById('newsList').innerHTML = news.map(n => {
+      const date = new Date(n.providerPublishTime * 1000);
+      const dateStr = `${date.getMonth()+1}/${date.getDate()} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
+      return `
+        <a class="news-item" href="${n.link}" target="_blank" rel="noopener">
+          <div class="news-title">${n.title}</div>
+          <div class="news-meta">${n.publisher} · ${dateStr}</div>
+        </a>`;
+    }).join('');
+  } catch {
+    document.getElementById('newsList').innerHTML = '<div class="news-loading">新聞載入失敗</div>';
   }
 }
 
+/* ── click ── */
 function cardClick(idx) {
   if (compareMode) { toggleCompare(idx); }
-  else { selectedIdx = idx; renderCards(); loadChart(); }
+  else {
+    selectedIdx = idx;
+    renderCards();
+    loadChart();
+    const s = allStocks[idx];
+    fetchNews(s.symbol, s.name);
+  }
 }
 
 function cardDblClick(idx) {
@@ -277,6 +383,7 @@ function toggleCompareMode() {
   renderCards(); loadChart();
 }
 
+/* ── fetch ── */
 async function fetchPrice(symbol) {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
   try {
@@ -316,17 +423,16 @@ function pctChange(data) {
   return data.map(v=>v!=null?+((v-first)/first*100).toFixed(3):null);
 }
 
+/* ── chart ── */
 function renderSingle(labels, data, name) {
   const valid = data.filter(Boolean);
   const first = valid[0]??0, last = valid[valid.length-1]??0;
   const isUp = last>=first;
-  const lineColor = isUp?'#e05252':'#3db87a';
-  const fillColor = isUp?'rgba(224,82,82,0.12)':'rgba(61,184,122,0.12)';
   if (lineChart) { lineChart.destroy(); lineChart=null; }
   document.getElementById('legend').innerHTML='';
   lineChart = new Chart(document.getElementById('lineChart'), {
     type:'line',
-    data:{ labels, datasets:[{ label:name, data, borderColor:lineColor, backgroundColor:fillColor, borderWidth:2, pointRadius:0, pointHoverRadius:4, fill:true, tension:0.3, spanGaps:true }] },
+    data:{ labels, datasets:[{ label:name, data, borderColor:isUp?'#e05252':'#3db87a', backgroundColor:isUp?'rgba(224,82,82,0.12)':'rgba(61,184,122,0.12)', borderWidth:2, pointRadius:0, pointHoverRadius:4, fill:true, tension:0.3, spanGaps:true }] },
     options: chartOptions(false)
   });
 }
@@ -334,15 +440,10 @@ function renderSingle(labels, data, name) {
 function renderMulti(datasets) {
   if (lineChart) { lineChart.destroy(); lineChart=null; }
   document.getElementById('legend').innerHTML = datasets.map(d=>`
-    <div class="legend-item">
-      <div class="legend-dot" style="background:${d.color}"></div>${d.name}
-    </div>`).join('');
+    <div class="legend-item"><div class="legend-dot" style="background:${d.color}"></div>${d.name}</div>`).join('');
   lineChart = new Chart(document.getElementById('lineChart'), {
     type:'line',
-    data:{
-      labels: datasets[0].labels,
-      datasets: datasets.map(d=>({ label:d.name, data:d.pctData, borderColor:d.color, backgroundColor:'transparent', borderWidth:2, pointRadius:0, pointHoverRadius:4, fill:false, tension:0.3, spanGaps:true }))
-    },
+    data:{ labels: datasets[0].labels, datasets: datasets.map(d=>({ label:d.name, data:d.pctData, borderColor:d.color, backgroundColor:'transparent', borderWidth:2, pointRadius:0, pointHoverRadius:4, fill:false, tension:0.3, spanGaps:true })) },
     options: chartOptions(true)
   });
 }
@@ -353,8 +454,7 @@ function chartOptions(isCompare) {
     interaction:{mode:'index',intersect:false},
     plugins:{
       legend:{display:false},
-      tooltip:{
-        backgroundColor:'#222220', titleColor:'#b4b2a9', bodyColor:'#f1efe8', borderColor:'#333', borderWidth:0.5,
+      tooltip:{ backgroundColor:'#222220', titleColor:'#b4b2a9', bodyColor:'#f1efe8', borderColor:'#333', borderWidth:0.5,
         callbacks:{ label: c => isCompare ? ` ${c.dataset.label}: ${c.parsed.y>=0?'+':''}${c.parsed.y?.toFixed(2)}%` : ` ${c.parsed.y?.toFixed(2)??'—'}` }
       }
     },
@@ -399,6 +499,7 @@ async function doRefresh() {
     if (d) priceData[s.symbol]=d;
   }));
   renderCards();
+  renderRanking();
   const now = new Date();
   document.getElementById('lastUpdate').textContent =
     `更新：${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
@@ -406,6 +507,10 @@ async function doRefresh() {
 }
 
 doRefresh();
+setInterval(doRefresh, 30000);
+
+// 預設載入台積電新聞
+fetchNews('2330.TW', '台積電');
 </script>
 </body>
 </html>
