@@ -31,8 +31,6 @@
       cursor: pointer; display: flex; align-items: center; gap: 5px; transition: background 0.15s;
     }
     .refresh-btn:hover { background: var(--bg3); }
-
-    /* 漲跌排行 */
     .ranking-area {
       background: var(--bg2); border-radius: var(--radius-lg);
       padding: 14px 16px; margin-bottom: 1.25rem;
@@ -46,7 +44,6 @@
     .ranking-item:last-child { border-bottom: none; }
     .ranking-name { color: var(--text2); }
     .ranking-pct { font-weight: 500; }
-
     .section-label {
       font-size: 11px; font-weight: 500; color: var(--text3);
       letter-spacing: 0.08em; text-transform: uppercase;
@@ -57,6 +54,21 @@
       display: flex; align-items: center; gap: 6px;
     }
     .compare-hint span { background: var(--bg3); border-radius: 4px; padding: 2px 8px; font-size: 11px; color: var(--text2); }
+    .add-stock-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; }
+    .add-stock-input {
+      background: var(--bg3); border: 0.5px solid var(--border2); color: var(--text);
+      border-radius: var(--radius-md); padding: 6px 12px; font-size: 13px;
+      flex: 1; max-width: 200px; outline: none;
+    }
+    .add-stock-input::placeholder { color: var(--text3); }
+    .add-stock-input:focus { border-color: #378add; }
+    .add-btn {
+      background: #1e3a5f; border: 0.5px solid #378add; color: #7bb8f0;
+      border-radius: var(--radius-md); padding: 6px 14px; font-size: 13px;
+      cursor: pointer; white-space: nowrap; transition: background 0.15s;
+    }
+    .add-btn:hover { background: #2a4f7a; }
+    .add-error { font-size: 12px; color: var(--up); }
     .cards {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       gap: 10px; margin-bottom: 4px;
@@ -76,14 +88,21 @@
       display: flex; align-items: center; justify-content: center; font-size: 9px;
     }
     .card.comparing .card-check { background: var(--compare-color, #888); border-color: var(--compare-color, #888); color: #fff; }
+    .delete-btn {
+      position: absolute; top: 6px; right: 6px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: rgba(224,82,82,0.15); border: none; color: var(--up);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; cursor: pointer; opacity: 0; transition: opacity 0.15s; line-height: 1;
+    }
+    .card:hover .delete-btn { opacity: 1; }
     .card-symbol { font-size: 11px; color: var(--text3); margin-bottom: 2px; }
     .card-name { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 20px; }
     .card-price { font-size: 19px; font-weight: 500; margin-bottom: 4px; }
     .card-change { font-size: 12px; }
     .card-skeleton { opacity: 0.3; }
     .up { color: var(--up); } .down { color: var(--down); } .flat { color: var(--text2); }
-
-    /* Chart */
+    .empty-watchlist { font-size: 13px; color: var(--text3); padding: 8px 0; }
     .chart-area { background: var(--bg2); border-radius: var(--radius-lg); padding: 16px 18px; margin-top: 1.25rem; }
     .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
     .chart-title { font-size: 14px; font-weight: 500; }
@@ -107,21 +126,17 @@
     .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .chart-wrap { position: relative; width: 100%; height: 280px; }
     .chart-note { font-size: 11px; color: var(--text3); text-align: right; margin-top: 8px; }
-
-    /* 新聞 */
     .news-area { background: var(--bg2); border-radius: var(--radius-lg); padding: 16px 18px; margin-top: 1.25rem; }
     .news-header { font-size: 14px; font-weight: 500; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
     .news-list { display: flex; flex-direction: column; gap: 10px; }
     .news-item {
       padding: 10px 12px; background: var(--bg3); border-radius: var(--radius-md);
-      cursor: pointer; transition: background 0.15s; text-decoration: none;
-      display: block;
+      cursor: pointer; transition: background 0.15s; text-decoration: none; display: block;
     }
     .news-item:hover { background: #2a2a28; }
     .news-title { font-size: 13px; color: var(--text); margin-bottom: 4px; line-height: 1.4; }
     .news-meta { font-size: 11px; color: var(--text3); }
     .news-loading { font-size: 13px; color: var(--text3); text-align: center; padding: 1.5rem; }
-
     @media (max-width: 480px) {
       .cards { grid-template-columns: repeat(2, 1fr); }
       .card-price { font-size: 16px; }
@@ -131,7 +146,6 @@
 </head>
 <body>
 <div class="container">
-
   <div class="header">
     <h1><i class="ti ti-chart-line" aria-hidden="true"></i>股票看板</h1>
     <div style="display:flex;align-items:center;gap:10px">
@@ -142,7 +156,6 @@
     </div>
   </div>
 
-  <!-- 漲跌排行 -->
   <div class="ranking-area">
     <div class="ranking-col">
       <h3>🔴 今日漲幅前三</h3>
@@ -159,6 +172,16 @@
     點擊卡片可單獨查看；開啟比較模式後點選最多 5 支一起比較
     <span id="compareCount" style="display:none"></span>
   </div>
+
+  <div class="section-label">⭐ 自選股</div>
+  <div class="add-stock-row">
+    <input class="add-stock-input" id="addInput" placeholder="輸入代號，例如 2454.TW" onkeydown="if(event.key==='Enter')addStock()" />
+    <button class="add-btn" onclick="addStock()">
+      <i class="ti ti-plus" style="font-size:12px;vertical-align:-1px"></i> 新增
+    </button>
+    <span class="add-error" id="addError"></span>
+  </div>
+  <div class="cards" id="cards-watchlist"></div>
 
   <div class="section-label">🇹🇼 台股</div>
   <div class="cards" id="cards-tw"></div>
@@ -196,7 +219,6 @@
     <p class="chart-note">資料來源：Yahoo Finance｜延遲約 15 分鐘</p>
   </div>
 
-  <!-- 個股新聞 -->
   <div class="news-area">
     <div class="news-header">
       <i class="ti ti-news" style="font-size:15px;color:var(--text2)"></i>
@@ -204,11 +226,36 @@
     </div>
     <div class="news-list" id="newsList"><div class="news-loading">點擊股票卡片查看相關新聞</div></div>
   </div>
-
 </div>
 
 <script>
 const COLORS = ['#e05252','#5b9cf6','#f6a94a','#a78df6','#3db87a','#f6e44a','#f67ab5','#4af6e4'];
+const PROXY = '/api/';
+
+// 台股中文對照表
+const TW_NAMES = {
+  '2330': '台積電', '2317': '鴻海', '2454': '聯發科', '2308': '台達電',
+  '2382': '廣達', '2303': '聯電', '2881': '富邦金', '2882': '國泰金',
+  '2886': '兆豐金', '2891': '中信金', '2884': '玉山金', '2892': '第一金',
+  '2885': '元大金', '2888': '新光金', '2887': '台新金', '2883': '開發金',
+  '2890': '永豐金', '5880': '合庫金', '2912': '統一超', '1301': '台塑',
+  '1303': '南亞', '1326': '台化', '6505': '台塑化', '2002': '中鋼',
+  '1216': '統一', '2912': '統一超', '2207': '和泰車', '2395': '研華',
+  '3008': '大立光', '2379': '瑞昱', '2357': '華碩', '2376': '技嘉',
+  '2301': '光寶科', '2324': '仁寶', '2353': '宏碁', '2356': '英業達',
+  '3045': '台灣大', '4904': '遠傳', '2412': '中華電', '9910': '豐泰',
+  '2327': '國巨', '2337': '旺宏', '3711': '日月光投控', '2344': '華邦電',
+  '2408': '南亞科', '6669': '緯穎', '2392': '正崴', '4938': '和碩',
+  '6415': '矽力-KY', '3034': '聯詠', '2409': '友達', '2360': '致茂',
+  '0050': '元大台灣50', '00878': '國泰永續高股息', '00692': '富邦公司治理',
+  '006208': '富邦台50', '00631L': '元大台灣50正2', '00632R': '元大台灣50反1',
+  '00757': '統一FANG+', '00858': '永豐美國500大', '00646': '元大S&P500',
+};
+
+function getTWName(symbol) {
+  const code = symbol.replace('.TW', '').replace('.TWO', '');
+  return TW_NAMES[code] || null;
+}
 
 const stockGroups = {
   tw: [
@@ -238,14 +285,18 @@ const stockGroups = {
   ],
 };
 
-const allStocks = [
-  ...stockGroups.tw.map(s=>({...s,group:'tw'})),
-  ...stockGroups.us.map(s=>({...s,group:'us'})),
-  ...stockGroups.kr.map(s=>({...s,group:'kr'})),
-  ...stockGroups.index.map(s=>({...s,group:'index'})),
-];
+let watchlist = JSON.parse(localStorage.getItem('watchlist') || '[]');
 
-const PROXY = '/api/';
+function getAllStocks() {
+  return [
+    ...watchlist.map(s=>({...s,group:'watchlist'})),
+    ...stockGroups.tw.map(s=>({...s,group:'tw'})),
+    ...stockGroups.us.map(s=>({...s,group:'us'})),
+    ...stockGroups.kr.map(s=>({...s,group:'kr'})),
+    ...stockGroups.index.map(s=>({...s,group:'index'})),
+  ];
+}
+
 let selectedIdx = 0;
 let currentRange = '1mo';
 let lineChart = null;
@@ -257,33 +308,113 @@ function cc(v){ return v>0?'up':v<0?'down':'flat'; }
 function ar(v){ return v>0?'▲':v<0?'▼':'—'; }
 function fmt(n,d=2){ return n!=null?n.toFixed(d):'—'; }
 
-/* ── 漲跌排行 ── */
+async function addStock() {
+  const input = document.getElementById('addInput');
+  const errEl = document.getElementById('addError');
+  const symbol = input.value.trim().toUpperCase();
+  errEl.textContent = '';
+  if (!symbol) return;
+
+  const all = getAllStocks();
+  if (all.some(s => s.symbol === symbol)) {
+    errEl.textContent = '此股票已在清單中';
+    return;
+  }
+
+  errEl.textContent = '驗證中...';
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
+  try {
+    const r = await fetch(PROXY + url.replace('https://query1.finance.yahoo.com/',''));
+    const j = await r.json();
+    if (!j.chart.result) { errEl.textContent = '找不到此股票代號'; return; }
+    const meta = j.chart.result[0].meta;
+
+    // 優先用中文對照表，否則用 Yahoo 回傳的名稱
+    const twName = getTWName(symbol);
+    const name = twName || meta.longName || meta.shortName || symbol;
+    const short = symbol.replace('.TW','').replace('.TWO','').replace('.KS','');
+
+    const price = meta.regularMarketPrice;
+    const prev  = meta.chartPreviousClose ?? meta.previousClose ?? price;
+    const change = price - prev;
+    const pct = prev?(change/prev)*100:0;
+
+    const newStock = { symbol, name, short };
+    watchlist.push(newStock);
+    localStorage.setItem('watchlist', JSON.stringify(watchlist));
+    priceData[symbol] = { price, change, pct };
+
+    input.value = '';
+    errEl.textContent = '';
+    renderWatchlist();
+    renderRanking();
+  } catch { errEl.textContent = '驗證失敗，請確認代號'; }
+}
+
+function deleteStock(symbol) {
+  watchlist = watchlist.filter(s => s.symbol !== symbol);
+  localStorage.setItem('watchlist', JSON.stringify(watchlist));
+  delete priceData[symbol];
+  renderWatchlist();
+  renderRanking();
+}
+
+function renderWatchlist() {
+  const el = document.getElementById('cards-watchlist');
+  if (!watchlist.length) {
+    el.innerHTML = '<div class="empty-watchlist">尚未新增自選股，輸入股票代號開始追蹤</div>';
+    return;
+  }
+  const allStocks = getAllStocks();
+  el.innerHTML = watchlist.map(s => {
+    const idx = allStocks.findIndex(a=>a.symbol===s.symbol);
+    const d = priceData[s.symbol];
+    const price = d?fmt(d.price):'—';
+    const chg   = d?(d.change>=0?'+':'')+fmt(d.change):'—';
+    const pct   = d?(d.pct>=0?'+':'')+fmt(d.pct)+'%':'';
+    const cls   = d?cc(d.change):'flat card-skeleton';
+    const cmpIdx = compareSet.indexOf(idx);
+    const isCmp = cmpIdx !== -1;
+    const color = isCmp ? COLORS[cmpIdx] : '';
+    const isSel = !compareMode && selectedIdx===idx;
+    return `
+      <div class="card ${isSel?'selected':''} ${isCmp?'comparing':''}"
+           style="${isCmp?`--compare-color:${color}`:''}"
+           onclick="cardClick(${idx})" ondblclick="cardDblClick(${idx})" role="button" tabindex="0">
+        ${compareMode
+          ? `<div class="card-check">${isCmp?'✓':''}</div>`
+          : `<button class="delete-btn" onclick="event.stopPropagation();deleteStock('${s.symbol}')" title="刪除">✕</button>`}
+        <div class="card-symbol">${s.short}</div>
+        <div class="card-name">${s.name}</div>
+        <div class="card-price ${cls}">${price}</div>
+        <div class="card-change ${cls}">${ar(d?.change)} ${chg} ${pct}</div>
+      </div>`;
+  }).join('');
+}
+
 function renderRanking() {
-  const all = allStocks
+  const all = getAllStocks()
     .filter(s => priceData[s.symbol])
     .map(s => ({ name: s.name, pct: priceData[s.symbol].pct }))
     .sort((a,b) => b.pct - a.pct);
-
   const top3 = all.slice(0, 3);
   const bot3 = all.slice(-3).reverse();
-
-  document.getElementById('rank-up').innerHTML = top3.map(s => `
+  document.getElementById('rank-up').innerHTML = top3.length ? top3.map(s=>`
     <div class="ranking-item">
       <span class="ranking-name">${s.name}</span>
       <span class="ranking-pct up">▲ ${s.pct.toFixed(2)}%</span>
-    </div>`).join('') || '<div class="news-loading">載入中...</div>';
-
-  document.getElementById('rank-down').innerHTML = bot3.map(s => `
+    </div>`).join('') : '<div class="news-loading">載入中...</div>';
+  document.getElementById('rank-down').innerHTML = bot3.length ? bot3.map(s=>`
     <div class="ranking-item">
       <span class="ranking-name">${s.name}</span>
       <span class="ranking-pct down">▼ ${Math.abs(s.pct).toFixed(2)}%</span>
-    </div>`).join('') || '<div class="news-loading">載入中...</div>';
+    </div>`).join('') : '<div class="news-loading">載入中...</div>';
 }
 
-/* ── cards ── */
 function renderGroup(key) {
   const el = document.getElementById(`cards-${key}`);
   if (!el) return;
+  const allStocks = getAllStocks();
   el.innerHTML = stockGroups[key].map(s => {
     const idx = allStocks.findIndex(a=>a.symbol===s.symbol);
     const d = priceData[s.symbol];
@@ -298,8 +429,7 @@ function renderGroup(key) {
     return `
       <div class="card ${isSel?'selected':''} ${isCmp?'comparing':''}"
            style="${isCmp?`--compare-color:${color}`:''}"
-           onclick="cardClick(${idx})" ondblclick="cardDblClick(${idx})"
-           role="button" tabindex="0">
+           onclick="cardClick(${idx})" ondblclick="cardDblClick(${idx})" role="button" tabindex="0">
         <div class="card-check">${isCmp?'✓':''}</div>
         <div class="card-symbol">${s.short}</div>
         <div class="card-name">${s.name}</div>
@@ -310,51 +440,40 @@ function renderGroup(key) {
 }
 
 function renderCards() {
+  renderWatchlist();
   ['tw','us','kr','index'].forEach(renderGroup);
   const cnt = document.getElementById('compareCount');
   if (compareMode && compareSet.length > 0) {
-    cnt.style.display='inline';
-    cnt.textContent = `已選 ${compareSet.length}/5`;
+    cnt.style.display='inline'; cnt.textContent = `已選 ${compareSet.length}/5`;
   } else { cnt.style.display='none'; }
 }
 
-/* ── 個股新聞 ── */
 async function fetchNews(symbol, name) {
   document.getElementById('newsTitle').textContent = `${name} 相關新聞`;
   document.getElementById('newsList').innerHTML = '<div class="news-loading">載入新聞中...</div>';
   try {
-    const ticker = symbol.replace('.TW','').replace('.KS','');
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
+    const ticker = symbol.replace('.TW','').replace('.KS','').replace('^','');
     const newsUrl = `https://query2.finance.yahoo.com/v1/finance/search?q=${ticker}&lang=zh-TW&region=TW&quotesCount=0&newsCount=5`;
-    const r = await fetch(PROXY + newsUrl.replace('https://query2.finance.yahoo.com/','').replace('https://query1.finance.yahoo.com/',''));
+    const r = await fetch(PROXY + newsUrl.replace('https://query2.finance.yahoo.com/',''));
     const j = await r.json();
     const news = j.news ?? [];
-    if (!news.length) {
-      document.getElementById('newsList').innerHTML = '<div class="news-loading">目前無相關新聞</div>';
-      return;
-    }
+    if (!news.length) { document.getElementById('newsList').innerHTML = '<div class="news-loading">目前無相關新聞</div>'; return; }
     document.getElementById('newsList').innerHTML = news.map(n => {
       const date = new Date(n.providerPublishTime * 1000);
       const dateStr = `${date.getMonth()+1}/${date.getDate()} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
-      return `
-        <a class="news-item" href="${n.link}" target="_blank" rel="noopener">
-          <div class="news-title">${n.title}</div>
-          <div class="news-meta">${n.publisher} · ${dateStr}</div>
-        </a>`;
+      return `<a class="news-item" href="${n.link}" target="_blank" rel="noopener">
+        <div class="news-title">${n.title}</div>
+        <div class="news-meta">${n.publisher} · ${dateStr}</div>
+      </a>`;
     }).join('');
-  } catch {
-    document.getElementById('newsList').innerHTML = '<div class="news-loading">新聞載入失敗</div>';
-  }
+  } catch { document.getElementById('newsList').innerHTML = '<div class="news-loading">新聞載入失敗</div>'; }
 }
 
-/* ── click ── */
 function cardClick(idx) {
   if (compareMode) { toggleCompare(idx); }
   else {
-    selectedIdx = idx;
-    renderCards();
-    loadChart();
-    const s = allStocks[idx];
+    selectedIdx = idx; renderCards(); loadChart();
+    const s = getAllStocks()[idx];
     fetchNews(s.symbol, s.name);
   }
 }
@@ -378,12 +497,10 @@ function toggleCompare(idx) {
 function toggleCompareMode() {
   compareMode = !compareMode;
   document.getElementById('compareBtn').classList.toggle('active', compareMode);
-  if (!compareMode) { compareSet = []; }
-  else { compareSet = [selectedIdx]; }
+  if (!compareMode) { compareSet = []; } else { compareSet = [selectedIdx]; }
   renderCards(); loadChart();
 }
 
-/* ── fetch ── */
 async function fetchPrice(symbol) {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
   try {
@@ -423,7 +540,6 @@ function pctChange(data) {
   return data.map(v=>v!=null?+((v-first)/first*100).toFixed(3):null);
 }
 
-/* ── chart ── */
 function renderSingle(labels, data, name) {
   const valid = data.filter(Boolean);
   const first = valid[0]??0, last = valid[valid.length-1]??0;
@@ -466,6 +582,7 @@ function chartOptions(isCompare) {
 }
 
 async function loadChart() {
+  const allStocks = getAllStocks();
   if (compareMode && compareSet.length > 1) {
     document.getElementById('chartTitle').textContent = '走勢比較（%變化）';
     const results = await Promise.all(compareSet.map(async (idx,ci) => {
@@ -493,6 +610,7 @@ function setRange(el, range) {
 }
 
 async function doRefresh() {
+  const allStocks = getAllStocks();
   renderCards();
   await Promise.all(allStocks.map(async s=>{
     const d = await fetchPrice(s.symbol);
@@ -508,8 +626,6 @@ async function doRefresh() {
 
 doRefresh();
 setInterval(doRefresh, 30000);
-
-// 預設載入台積電新聞
 fetchNews('2330.TW', '台積電');
 </script>
 </body>
