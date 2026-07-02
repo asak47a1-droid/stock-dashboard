@@ -230,7 +230,7 @@
 
 <script>
 const COLORS = ['#e05252','#5b9cf6','#f6a94a','#a78df6','#3db87a','#f6e44a','#f67ab5','#4af6e4'];
-const PROXY = '/api/';
+const PROXY = 'https://corsproxy.io/?';
 
 // 台股中文對照表
 const TW_NAMES = {
@@ -324,7 +324,7 @@ async function addStock() {
   errEl.textContent = '驗證中...';
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
   try {
-    const r = await fetch(PROXY + url.replace('https://query1.finance.yahoo.com/',''));
+    const r = await fetch(PROXY + encodeURIComponent(url));
     const j = await r.json();
     if (!j.chart.result) { errEl.textContent = '找不到此股票代號'; return; }
     const meta = j.chart.result[0].meta;
@@ -454,7 +454,7 @@ async function fetchNews(symbol, name) {
   try {
     const ticker = symbol.replace('.TW','').replace('.KS','').replace('^','');
     const newsUrl = `https://query2.finance.yahoo.com/v1/finance/search?q=${ticker}&lang=zh-TW&region=TW&quotesCount=0&newsCount=5`;
-    const r = await fetch(PROXY + newsUrl.replace('https://query2.finance.yahoo.com/',''));
+    const r = await fetch(PROXY + encodeURIComponent(newsUrl));
     const j = await r.json();
     const news = j.news ?? [];
     if (!news.length) { document.getElementById('newsList').innerHTML = '<div class="news-loading">目前無相關新聞</div>'; return; }
@@ -504,7 +504,7 @@ function toggleCompareMode() {
 async function fetchPrice(symbol) {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
   try {
-    const r = await fetch(PROXY + url.replace('https://query1.finance.yahoo.com/',''));
+    const r = await fetch(PROXY + encodeURIComponent(url));
     const j = await r.json();
     const meta = j.chart.result[0].meta;
     const price = meta.regularMarketPrice;
@@ -519,7 +519,7 @@ async function fetchHistory(symbol, range) {
   const iv = {'1d':'5m','1mo':'1d','3mo':'1d','6mo':'1wk','1y':'1wk','5y':'1mo'}[range]??'1d';
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${iv}&range=${range}`;
   try {
-    const r = await fetch(PROXY + url.replace('https://query1.finance.yahoo.com/',''));
+    const r = await fetch(PROXY + encodeURIComponent(url));
     const j = await r.json();
     const res = j.chart.result[0];
     const stamps = res.timestamp;
